@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google Sheets Input</title>
+    <style>
+      #excel-table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      #excel-table th, #excel-table td {
+          border: 1px solid black;
+          padding: 8px;
+          text-align: left;
+      }
+       #excel-table tr:first-child td {
+            text-align: center; /* Center align text in the first row */
+            font-weight: bold; /* bold font in first row */
+        }
+    </style>
+</head>
+<body>
+    <h2>输入值</h2>
+    <label for="input-C2">项目名称:</label> <input type="text" id="input-C2">
+    <label for="input-C3">区间信息:</label> <input type="text" id="input-C3">
+    <label for="input-C4">地区:</label>
+      <select id="input-C4"></select>
+    <br />
+    <label for="input-C6">隧道长度:</label> <input type="text" id="input-C6">
+    <label for="input-C7">工期:</label> <input type="text" id="input-C7">
+    <label for="input-C8">坡度:</label> <input type="text" id="input-C8">
+    <label for="input-C9">行车轨距:</label> <input type="text" id="input-C9">
+     <button onclick="submitData()">更新表格</button>
+     <button onclick="downloadPdf()">下载PDF</button>
+
+    <h2>结果</h2>
+    <div id="result"></div>
+
+    <script>
+       let dropdownOptions = [];
+       fetch('/dropdown_options', {
+             method: 'GET',
+           })
+           .then(response => response.json())
+            .then(data => {
+               if (data && data.dropdown_options){
+                  dropdownOptions = data.dropdown_options;
+                  console.log("DropDown options:",dropdownOptions);
+                  const select = document.getElementById("input-C4");
+                     select.innerHTML = ''; // 清空之前的选项
+                    for (const option of dropdownOptions){
+                       const opt = document.createElement("option");
+                       opt.value = option;
+                      opt.text = option;
+                      select.add(opt);
+                    }
+               }
+               else {
+                     console.error("Invalid response format for dropdown options",data)
+                }
+          })
+            .catch(error => {
+            console.error("Load option Error",error)
+            });
+
+      function submitData() {
+          const inputC2 = document.getElementById("input-C2").value;
+          const inputC3 = document.getElementById("input-C3").value;
+           const inputC4 = document.getElementById("input-C4").value;
+          const inputC6 = document.getElementById("input-C6").value;
+          const inputC7 = document.getElementById("input-C7").value;
+          const inputC8 = document.getElementById("input-C8").value;
+          const inputC9 = document.getElementById("input-C9").value;
+          const data = {
+               C2: inputC2,
+               C3: inputC3,
+                C4: inputC4,
+              C6: inputC6,
+              C7: inputC7,
+              C8: inputC8,
+              C9: inputC9,
+          };
+          fetch('/process_sheets', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(data),
+          })
+              .then(response => response.json())
+              .then(data => {
+                  if (data && data.data){
+                     displayTable(data.data);
+                  }
+               else{
+                  console.error("Invalid response format for table data",data)
+                }
+              })
+              .catch(error => {
+                  alert("Network Error" + error);
+                  console.error("Network Error:",error)
+              });
+      }
+    function downloadPdf(){
+        fetch('/download_pdf', {
+               method: 'GET',
+          })
+          .then(response => {
+             if (response.ok){
+                 return response.blob();
+               }
+              else{
+                    alert("Error: " + response.statusText);
+                }
+            })
+         .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+               a.download = "download.pdf";
+               document.body.appendChild(a);
+                a.click();
+               document.body.removeChild(a);
+               window.URL.revokeObjectURL(url)
+             })
+            .catch(error => {
+             alert("PDF download Error" + error);
+               console.error("PDF download error:",error)
+          });
+      }
+       function displayTable(tableData) {
+         console.log("Rendering table with data:", tableData);
+           if (!tableData) {
+                console.error("tableData is undefined")
+                  return
+             }
+         let table = '<table id="excel-table">';
+         for (let i = 12; i < 47; i++) {
+           table += '<tr>';
+            for (let j = 0; j < 19; j++) {
+                  let cellData = null;
+                   if(tableData[i]){
+                     cellData = tableData[i][j]
+                   }
+                 if(i == 12 && j == 0){
+                     table += `<td colspan="19" >` + (cellData === null ? '' : cellData) + '</td>';
+                     break;
+                 } else{
+                    table += '<td>' + (cellData === null ? '' : cellData) + '</td>';
+                 }
+               }
+            table += '</tr>';
+          }
+         table += '</table>';
+         document.getElementById("result").innerHTML = table;
+      }
+</script>
+</body>
+</html>

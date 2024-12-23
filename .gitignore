@@ -1,0 +1,17 @@
+# 忽略虚拟环境目录
+venv/
+
+# 忽略Google服务账户凭证文件
+plucky-portal-389210-4bb948748fd4.json
+
+# 忽略Python缓存和编译文件
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 忽略日志文件
+*.log
+
+# 忽略环境变量文件
+.env
