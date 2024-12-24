@@ -6,15 +6,19 @@
       #excel-table {
         border-collapse: collapse;
         width: 100%;
+        empty-cells: show; /* 强制显示空单元格的边框 */
       }
       #excel-table th, #excel-table td {
           border: 1px solid black;
           padding: 8px;
           text-align: left;
       }
-       #excel-table tr:first-child td {
-            text-align: center; /* Center align text in the first row */
-            font-weight: bold; /* bold font in first row */
+      #excel-table th {
+          background-color: #f2f2f2;
+      }
+      #excel-table tr:first-child td {
+            text-align: center;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -30,7 +34,7 @@
     <label for="input-C8">坡度:</label> <input type="text" id="input-C8">
     <label for="input-C9">行车轨距:</label> <input type="text" id="input-C9">
      <button onclick="submitData()">更新表格</button>
-     <button onclick="downloadPdf()">下载PDF</button>
+     <button onclick="downloadExcel()">下载Excel</button>
 
     <h2>结果</h2>
     <div id="result"></div>
@@ -89,7 +93,7 @@
               .then(response => response.json())
               .then(data => {
                   if (data && data.data){
-                     displayTable(data.data);
+                      displayTable(data.data);
                   }
                else{
                   console.error("Invalid response format for table data",data)
@@ -100,59 +104,91 @@
                   console.error("Network Error:",error)
               });
       }
-    function downloadPdf(){
-        fetch('/download_pdf', {
-               method: 'GET',
-          })
-          .then(response => {
-             if (response.ok){
-                 return response.blob();
-               }
-              else{
-                    alert("Error: " + response.statusText);
-                }
+
+      function downloadExcel(){
+          fetch('/download_excel', {
+                 method: 'GET',
             })
-         .then(blob => {
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-               a.download = "download.pdf";
-               document.body.appendChild(a);
-                a.click();
-               document.body.removeChild(a);
-               window.URL.revokeObjectURL(url)
-             })
-            .catch(error => {
-             alert("PDF download Error" + error);
-               console.error("PDF download error:",error)
-          });
-      }
-       function displayTable(tableData) {
-         console.log("Rendering table with data:", tableData);
-           if (!tableData) {
-                console.error("tableData is undefined")
-                  return
-             }
-         let table = '<table id="excel-table">';
-         for (let i = 12; i < 47; i++) {
-           table += '<tr>';
-            for (let j = 0; j < 19; j++) {
-                  let cellData = null;
-                   if(tableData[i]){
-                     cellData = tableData[i][j]
-                   }
-                 if(i == 12 && j == 0){
-                     table += `<td colspan="19" >` + (cellData === null ? '' : cellData) + '</td>';
-                     break;
-                 } else{
-                    table += '<td>' + (cellData === null ? '' : cellData) + '</td>';
+            .then(response => {
+               if (response.ok){
+                   return response.blob();
                  }
-               }
-            table += '</tr>';
-          }
+                else{
+                      alert("Error: " + response.statusText);
+                  }
+              })
+           .then(blob => {
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                 a.download = "sheet_download.xlsx";
+                 document.body.appendChild(a);
+                  a.click();
+                 document.body.removeChild(a);
+                 window.URL.revokeObjectURL(url)
+               })
+              .catch(error => {
+               alert("Excel download Error" + error);
+                 console.error("Excel download error:",error)
+            });
+        }
+
+       function displayTable(data) {
+         let table = '<table id="excel-table">';
+
+         // 添加标题行
+         const title = document.getElementById("input-C2").value + document.getElementById("input-C3").value + "地铁隧道物资清单";
+         table += `<tr><td colspan="19">${title}</td></tr>`;
+
+         // 添加列名行
+         const columnNames1 = ["大类", "名称", "型号", "计量单位", "初始用量", "推进用量", "合计用量", "月租赁单价", "一次性单价", "安拆装单价", "月租费合价", "租赁月", "合价",  "备注"];
+         const columnNames2 = ["", "", "", "", "", "", "", "", "", "", "", "", "租赁系数", "租费合价", "一次性合价", "物流运输费", "安拆装", "合计"];
+
+         // 第一行列名
+         table += '<tr>';
+         for (let i = 0; i < columnNames1.length; i++) {
+             if (i < 12) {
+                 table += `<th rowspan="2">${columnNames1[i]}</th>`;
+             } else if (i === 12) {
+                 table += `<th colspan="6">${columnNames1[i]}</th>`;
+             } else {
+                 table += `<th rowspan="2">${columnNames1[i]}</th>`; // 合并备注单元格
+             }
+         }
+         table += '</tr>';
+
+         // 第二行列名
+         table += '<tr>';
+         for (let i = 12; i < columnNames2.length; i++) {
+             table += `<th>${columnNames2[i]}</th>`;
+         }
+         table += '</tr>';
+
+         // 添加数据行
+         if (data.length > 0) {
+             for (let i = 15; i < data.length && i < 47; i++) {
+                 table += '<tr>';
+                 for (let j = 0; j < data[i].length; j++) {
+                     table += `<td>${data[i][j]}</td>`;
+                 }
+                 table += '</tr>';
+             }
+         } else {
+             // 添加一个空行
+             table += '<tr>';
+             for (let j = 0; j < 19; j++) {
+                 table += `<td></td>`;
+             }
+             table += '</tr>';
+         }
+
          table += '</table>';
          document.getElementById("result").innerHTML = table;
       }
+
+      // 初始不显示表格
+      // displayTable([]);
 </script>
 </body>
 </html>
+
