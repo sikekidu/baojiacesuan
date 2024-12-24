@@ -34,10 +34,10 @@
     <label for="input-C8">坡度:</label> <input type="text" id="input-C8">
     <label for="input-C9">行车轨距:</label> <input type="text" id="input-C9">
      <button onclick="submitData()">更新表格</button>
-     <button onclick="downloadExcel()">下载Excel</button>
+     <button id="downloadButton" onclick="downloadExcel()" style="display: none;">下载Excel</button>
 
-    <h2>结果</h2>
-    <div id="result"></div>
+    <h2 id="resultTitle" style="display: none;">结果</h2>
+    <div id="result" style="display: none;"></div>
 
     <script>
        let dropdownOptions = [];
@@ -94,6 +94,11 @@
               .then(data => {
                   if (data && data.data){
                       displayTable(data.data);
+                      // 显示下载按钮
+                      document.getElementById("downloadButton").style.display = "inline-block";
+                      // 显示结果标题和表格
+                      document.getElementById("resultTitle").style.display = "block";
+                      document.getElementById("result").style.display = "block";
                   }
                else{
                   console.error("Invalid response format for table data",data)
@@ -191,4 +196,3 @@
 </script>
 </body>
 </html>
-
