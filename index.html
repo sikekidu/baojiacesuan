@@ -71,6 +71,14 @@
         appearance: none;
         background-color: #ffffff;
       }
+      .form-group input.error,
+      .form-group select.error {
+        border-color: #e53e3e;
+      }
+      .form-group input.error::placeholder,
+      .form-group select.error::placeholder {
+        color: #e53e3e;
+      }
       .form-actions {
         display: flex;
         justify-content: flex-end;
@@ -105,6 +113,9 @@
             text-align: center;
             font-weight: bold;
         }
+      #resultTitle {
+        color: #1d4ed8;
+      }
     </style>
 </head>
 <body>
@@ -114,43 +125,43 @@
                 <div class="card-title">设备维保事业部后配套物资测算平台</div>
             </div>
             <div class="card-content">
-                <form onsubmit="submitData(event)">
+                <form id="mainForm" onsubmit="submitData(event)">
                     <div class="form-row">
                         <div class="form-group">
                             <label for="input-C2">项目名称:</label>
-                            <input type="text" id="input-C2" placeholder="请输入项目名称">
+                            <input type="text" id="input-C2" placeholder="请输入项目名称" oninput="removeError(this)">
                         </div>
                         <div class="form-group">
                             <label for="input-C3">区间信息:</label>
-                            <input type="text" id="input-C3" placeholder="请输入区间信息">
+                            <input type="text" id="input-C3" placeholder="请输入区间信息" oninput="removeError(this)">
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label for="input-C4">地区:</label>
-                            <select id="input-C4"></select>
+                            <select id="input-C4" oninput="removeError(this)"></select>
                         </div>
                         <div class="form-group">
                             <label for="input-C6">隧道长度:</label>
-                            <input type="text" id="input-C6" placeholder="请输入隧道长度">
+                            <input type="text" id="input-C6" placeholder="请输入隧道长度" oninput="removeError(this)">
                         </div>
                     </div>
                     <div class="form-row form-row-3">
                         <div class="form-group">
                             <label for="input-C7">工期:</label>
-                            <input type="text" id="input-C7" placeholder="请输入工期">
+                            <input type="text" id="input-C7" placeholder="请输入工期" oninput="removeError(this)">
                         </div>
                         <div class="form-group">
                             <label for="input-C8">坡度:</label>
-                            <input type="text" id="input-C8" placeholder="请输入坡度">
+                            <input type="text" id="input-C8" placeholder="请输入坡度" oninput="removeError(this)">
                         </div>
                         <div class="form-group">
                             <label for="input-C9">行车轨距:</label>
-                            <input type="text" id="input-C9" placeholder="请输入行车轨距">
+                            <input type="text" id="input-C9" placeholder="请输入行车轨距" oninput="removeError(this)">
                         </div>
                     </div>
                     <div class="form-actions">
-                        <button type="submit">更新表格</button>
+                        <button type="submit">生成清单</button>
                         <button id="downloadButton" onclick="downloadExcel()" style="display: none;">下载Excel</button>
                     </div>
                 </form>
@@ -189,21 +200,39 @@
 
       function submitData(event) {
           event.preventDefault();
-          const inputC2 = document.getElementById("input-C2").value;
-          const inputC3 = document.getElementById("input-C3").value;
-           const inputC4 = document.getElementById("input-C4").value;
-          const inputC6 = document.getElementById("input-C6").value;
-          const inputC7 = document.getElementById("input-C7").value;
-          const inputC8 = document.getElementById("input-C8").value;
-          const inputC9 = document.getElementById("input-C9").value;
+          const inputC2 = document.getElementById("input-C2");
+          const inputC3 = document.getElementById("input-C3");
+          const inputC4 = document.getElementById("input-C4");
+          const inputC6 = document.getElementById("input-C6");
+          const inputC7 = document.getElementById("input-C7");
+          const inputC8 = document.getElementById("input-C8");
+          const inputC9 = document.getElementById("input-C9");
+
+          let isValid = true;
+
+          // 验证输入框是否为空
+          const inputs = [inputC2, inputC3, inputC4, inputC6, inputC7, inputC8, inputC9];
+          inputs.forEach(input => {
+              if (!input.value) {
+                  input.classList.add('error');
+                  isValid = false;
+              } else {
+                  input.classList.remove('error');
+              }
+          });
+
+          if (!isValid) {
+              return;
+          }
+
           const data = {
-               C2: inputC2,
-               C3: inputC3,
-                C4: inputC4,
-              C6: inputC6,
-              C7: inputC7,
-              C8: inputC8,
-              C9: inputC9,
+               C2: inputC2.value,
+               C3: inputC3.value,
+                C4: inputC4.value,
+              C6: inputC6.value,
+              C7: inputC7.value,
+              C8: inputC8.value,
+              C9: inputC9.value,
           };
           fetch('/process_sheets', {
               method: 'POST',
@@ -260,7 +289,7 @@
             });
         }
 
-       function displayTable(data) {
+      function displayTable(data) {
          let table = '<table id="excel-table">';
 
          // 添加标题行
@@ -311,6 +340,10 @@
 
          table += '</table>';
          document.getElementById("result").innerHTML = table;
+      }
+
+      function removeError(input) {
+          input.classList.remove('error');
       }
 
       // 初始不显示表格
