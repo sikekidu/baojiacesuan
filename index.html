@@ -9,10 +9,14 @@
         padding: 1rem;
         color: #1f2937;
         font-family: Arial, sans-serif;
+        margin: 0;
+      }
+      .container {
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 1rem;
       }
       .card {
-        max-width: 1200px;
-        margin: 0 auto;
         background-color: #ffffff;
         border-radius: 0.375rem;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
@@ -36,7 +40,16 @@
         gap: 1rem;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       }
+      .form-row {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+      .form-row-3 {
+        justify-content: space-between;
+      }
       .form-group {
+        flex: 1;
         display: flex;
         flex-direction: column;
       }
@@ -51,6 +64,8 @@
         border: 1px solid #d1d5db;
         border-radius: 0.375rem;
         font-size: 0.875rem;
+        width: 100%;
+        box-sizing: border-box;
       }
       .form-group select {
         appearance: none;
@@ -93,49 +108,55 @@
     </style>
 </head>
 <body>
-    <div class="card">
-        <div class="card-header">
-            <div class="card-title">设备维保事业部后配套物资测算平台</div>
-        </div>
-        <div class="card-content">
-            <form onsubmit="submitData(event)">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="input-C2">项目名称:</label>
-                        <input type="text" id="input-C2" placeholder="请输入项目名称">
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">设备维保事业部后配套物资测算平台</div>
+            </div>
+            <div class="card-content">
+                <form onsubmit="submitData(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="input-C2">项目名称:</label>
+                            <input type="text" id="input-C2" placeholder="请输入项目名称">
+                        </div>
+                        <div class="form-group">
+                            <label for="input-C3">区间信息:</label>
+                            <input type="text" id="input-C3" placeholder="请输入区间信息">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="input-C3">区间信息:</label>
-                        <input type="text" id="input-C3" placeholder="请输入区间信息">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="input-C4">地区:</label>
+                            <select id="input-C4"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="input-C6">隧道长度:</label>
+                            <input type="text" id="input-C6" placeholder="请输入隧道长度">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="input-C4">地区:</label>
-                        <select id="input-C4"></select>
+                    <div class="form-row form-row-3">
+                        <div class="form-group">
+                            <label for="input-C7">工期:</label>
+                            <input type="text" id="input-C7" placeholder="请输入工期">
+                        </div>
+                        <div class="form-group">
+                            <label for="input-C8">坡度:</label>
+                            <input type="text" id="input-C8" placeholder="请输入坡度">
+                        </div>
+                        <div class="form-group">
+                            <label for="input-C9">行车轨距:</label>
+                            <input type="text" id="input-C9" placeholder="请输入行车轨距">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="input-C6">隧道长度:</label>
-                        <input type="text" id="input-C6" placeholder="请输入隧道长度">
+                    <div class="form-actions">
+                        <button type="submit">更新表格</button>
+                        <button id="downloadButton" onclick="downloadExcel()" style="display: none;">下载Excel</button>
                     </div>
-                    <div class="form-group">
-                        <label for="input-C7">工期:</label>
-                        <input type="text" id="input-C7" placeholder="请输入工期">
-                    </div>
-                    <div class="form-group">
-                        <label for="input-C8">坡度:</label>
-                        <input type="text" id="input-C8" placeholder="请输入坡度">
-                    </div>
-                    <div class="form-group">
-                        <label for="input-C9">行车轨距:</label>
-                        <input type="text" id="input-C9" placeholder="请输入行车轨距">
-                    </div>
-                </div>
-                <div class="form-actions">
-                    <button type="submit">更新表格</button>
-                    <button id="downloadButton" onclick="downloadExcel()" style="display: none;">下载Excel</button>
-                </div>
-            </form>
-            <h2 id="resultTitle" style="display: none;">结果</h2>
-            <div id="result" style="display: none;"></div>
+                </form>
+                <h2 id="resultTitle" style="display: none;">结果</h2>
+                <div id="result" style="display: none;"></div>
+            </div>
         </div>
     </div>
 
