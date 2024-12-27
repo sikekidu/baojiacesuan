@@ -1,10 +1,10 @@
-from googleapiclient.discovery import build
-from google.oauth2 import service_account
-from flask import Flask, request, jsonify, send_file, send_from_directory
 import os
-import io
+import json
+from dotenv import load_dotenv
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from flask import Flask, request, jsonify, send_file, send_from_directory
 import gspread
-import pandas as pd
 import logging
 from openpyxl import Workbook
 from openpyxl.styles import Border, Side, Alignment, Font
@@ -13,27 +13,35 @@ import tempfile
 
 app = Flask(__name__)
 
+# 加载 .env 文件
+load_dotenv()
+
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Google Sheets API configuration
-SERVICE_ACCOUNT_FILE = 'plucky-portal-389210-4bb948748fd4.json'  # Replace with your service account key
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/drive.file']
-SPREADSHEET_ID = '1o4c7PUcp7Y5fhLxRISThiywpmsJFrF5bR3ssr8M-hTM'  # Replace with your Google Sheet ID
+SPREADSHEET_ID = os.getenv('GOOGLE_SHEETS_ID')  # 从环境变量中读取 Google Sheet ID
 
-# Initialize Google Sheets API credentials
-creds = None
-if os.path.exists(SERVICE_ACCOUNT_FILE):
-    creds = service_account.Credentials.from_service_account_file(
-        SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+# 获取环境变量
+GOOGLE_APPLICATION_CREDENTIALS = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
 
+# 检查环境变量是否正确加载
+if not GOOGLE_APPLICATION_CREDENTIALS:
+    raise ValueError("GOOGLE_APPLICATION_CREDENTIALS environment variable is not set")
+
+# 解析 JSON 格式的服务账户密钥
+creds_info = json.loads(GOOGLE_APPLICATION_CREDENTIALS)
+
+# 初始化 Google Sheets API 凭证
+creds = service_account.Credentials.from_service_account_info(creds_info, scopes=SCOPES)
 service = build('sheets', 'v4', credentials=creds)
 sheets = service.spreadsheets()
 gc = gspread.authorize(creds)
 worksheet = gc.open_by_key(SPREADSHEET_ID).sheet1
 
 # Route to serve index.html
-@app.route('/', methods=['GET'])
+@app.route('/')
 def index():
     logging.debug("Serving index.html")
     return send_from_directory(os.path.dirname(os.path.abspath(__file__)), 'index.html')
@@ -133,7 +141,7 @@ def download_excel():
         border = Border(left=Side(style='thin'),
                         right=Side(style='thin'),
                         top=Side(style='thin'),
-                        bottom=Side(style='thin'))
+                        bottom=Side('thin'))
         for row in sheet.iter_rows(min_row=1, max_row=len(data) + 3):
             for cell in row:
                 cell.border = border
