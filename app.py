@@ -1,5 +1,6 @@
 import os
 import json
+import requests
 from dotenv import load_dotenv
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
@@ -24,14 +25,15 @@ SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapi
 SPREADSHEET_ID = os.getenv('GOOGLE_SHEETS_ID')  # 从环境变量中读取 Google Sheet ID
 
 # 获取环境变量
-GOOGLE_APPLICATION_CREDENTIALS = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
+GOOGLE_APPLICATION_CREDENTIALS = 'plucky-portal-389210-4bb948748fd4.json'
 
-# 检查环境变量是否正确加载
-if not GOOGLE_APPLICATION_CREDENTIALS:
-    raise ValueError("GOOGLE_APPLICATION_CREDENTIALS environment variable is not set")
+# 检查文件是否存在
+if not os.path.exists(GOOGLE_APPLICATION_CREDENTIALS):
+    raise FileNotFoundError(f"File {GOOGLE_APPLICATION_CREDENTIALS} not found")
 
-# 解析 JSON 格式的服务账户密钥
-creds_info = json.loads(GOOGLE_APPLICATION_CREDENTIALS)
+# 从文件加载 JSON 格式的服务账户密钥
+with open(GOOGLE_APPLICATION_CREDENTIALS, 'r') as file:
+    creds_info = json.load(file)
 
 # 初始化 Google Sheets API 凭证
 creds = service_account.Credentials.from_service_account_info(creds_info, scopes=SCOPES)
@@ -205,25 +207,29 @@ def download_excel():
 def get_sheet_data():
     logging.debug("Fetching data from Google Sheet")
 
-    # Fetch metadata to get the number of rows and columns
-    spreadsheet = sheets.get(spreadsheetId=SPREADSHEET_ID).execute()
-    num_rows = spreadsheet.get('sheets')[0].get('properties').get('gridProperties').get('rowCount')
-    num_cols = spreadsheet.get('sheets')[0].get('properties').get('gridProperties').get('columnCount')
+    try:
+        # Fetch metadata to get the number of rows and columns
+        spreadsheet = sheets.get(spreadsheetId=SPREADSHEET_ID).execute()
+        num_rows = spreadsheet.get('sheets')[0].get('properties').get('gridProperties').get('rowCount')
+        num_cols = spreadsheet.get('sheets')[0].get('properties').get('gridProperties').get('columnCount')
 
-    range = f"A1:{chr(64+num_cols)}{num_rows}"
-    logging.debug(f"Fetching data from sheet with range {range}")
-    result = sheets.values().get(spreadsheetId=SPREADSHEET_ID, range=range).execute()
-    all_data = result.get('values', [])
-    logging.debug(f"Data from sheet: {all_data}")
+        range = f"A1:{chr(64+num_cols)}{num_rows}"
+        logging.debug(f"Fetching data from sheet with range {range}")
+        result = sheets.values().get(spreadsheetId=SPREADSHEET_ID, range=range).execute()
+        all_data = result.get('values', [])
+        logging.debug(f"Data from sheet: {all_data}")
 
-    # Get data validation rule for C4
-    dropdown_options = []
-    result = sheets.values().get(spreadsheetId=SPREADSHEET_ID, range="基础物流价格信息!A2:A10").execute()
-    values = result.get("values", [])
-    dropdown_options = [value[0] for value in values]
-    logging.debug(f"Dropdown options: {dropdown_options}")
+        # Get data validation rule for C4
+        dropdown_options = []
+        result = sheets.values().get(spreadsheetId=SPREADSHEET_ID, range="基础物流价格信息!A2:A10").execute()
+        values = result.get("values", [])
+        dropdown_options = [value[0] for value in values]
+        logging.debug(f"Dropdown options: {dropdown_options}")
 
-    return all_data, dropdown_options
+        return all_data, dropdown_options
+    except Exception as e:
+        logging.error(f"Error fetching data from Google Sheet: {e}")
+        raise
 
 # Update sheet values with user input
 def update_values(data):
@@ -236,9 +242,13 @@ def update_values(data):
         col_idx = ord(key[0]) - 65
         values.append({'range': key, 'values': [[value]]})
     body = {'value_input_option': 'USER_ENTERED', 'data': values}
-    result = sheets.values().batchUpdate(spreadsheetId=SPREADSHEET_ID, body=body).execute()
-    logging.debug("Update operation successful")
-    return result
+    try:
+        result = sheets.values().batchUpdate(spreadsheetId=SPREADSHEET_ID, body=body).execute()
+        logging.debug("Update operation successful")
+        return result
+    except Exception as e:
+        logging.error(f"Error updating Google Sheet: {e}")
+        raise
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
