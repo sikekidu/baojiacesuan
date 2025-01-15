@@ -25,7 +25,7 @@ SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapi
 SPREADSHEET_ID = os.getenv('GOOGLE_SHEETS_ID')  # 从环境变量中读取 Google Sheet ID
 
 # 获取环境变量
-GOOGLE_APPLICATION_CREDENTIALS = 'plucky-portal-389210-4bb948748fd4.json'
+GOOGLE_APPLICATION_CREDENTIALS = 'credentials/service_account_credentials.json'
 
 # 检查文件是否存在
 if not os.path.exists(GOOGLE_APPLICATION_CREDENTIALS):
@@ -34,6 +34,9 @@ if not os.path.exists(GOOGLE_APPLICATION_CREDENTIALS):
 # 从文件加载 JSON 格式的服务账户密钥
 with open(GOOGLE_APPLICATION_CREDENTIALS, 'r') as file:
     creds_info = json.load(file)
+
+# 从 JSON 文件中获取 SPREADSHEET_ID
+SPREADSHEET_ID = creds_info["spreadsheet_id"]
 
 # 初始化 Google Sheets API 凭证
 creds = service_account.Credentials.from_service_account_info(creds_info, scopes=SCOPES)
